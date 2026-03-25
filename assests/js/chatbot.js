@@ -7,6 +7,7 @@ const chatSend = document.getElementById("chatSend");
 const quickButtons = document.querySelectorAll(".quick-btn");
 
 let hasShownWelcome = false;
+let chatHistory = [];
 
 function toggleChat() {
   chatbotWindow.classList.toggle("open");
@@ -41,23 +42,63 @@ function showWelcomeMessages() {
   );
 }
 
+function addTypingMessage() {
+  const msg = document.createElement("div");
+  msg.className = "chat-message bot typing typing-dots";
+  msg.textContent = "Typing";
+  chatMessages.appendChild(msg);
+  scrollToBottom();
+  return msg;
+}
+
+function maybeShowLeadPrompt(userMessage, botReply) {
+  const text = `${userMessage} ${botReply}`.toLowerCase();
+
+  const leadKeywords = [
+    "book",
+    "consultation",
+    "contact",
+    "call",
+    "email",
+    "price",
+    "cost",
+    "service",
+    "help with my taxes",
+    "need help",
+    "register my business",
+    "bookkeeping for my business"
+  ];
+
+  const matched = leadKeywords.some((keyword) => text.includes(keyword));
+
+  if (matched) {
+    addMessage(
+      "If you'd like, you can contact Nash Tax & Bookkeeping directly for personalized assistance.",
+      "bot"
+    );
+  }
+}
+
 async function sendMessage(messageText = null) {
   const message = (messageText || chatInput.value).trim();
   if (!message) return;
 
   addMessage(message, "user");
   chatInput.value = "";
+  chatHistory.push({ role: "user", content: message });
 
-  const typingMsg = addMessage("Typing...", "bot");
-  typingMsg.classList.add("typing");
+  const typingMsg = addTypingMessage();
 
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({
+        message,
+        history: chatHistory
+      })
     });
 
     const data = await response.json();
@@ -71,11 +112,14 @@ async function sendMessage(messageText = null) {
       return;
     }
 
-    addMessage(
+    const reply =
       data.reply ||
-        "Sorry, I couldn't generate a response right now. Please try again.",
-      "bot"
-    );
+      "Sorry, I couldn't generate a response right now. Please try again.";
+
+    addMessage(reply, "bot");
+    chatHistory.push({ role: "assistant", content: reply });
+
+    maybeShowLeadPrompt(message, reply);
   } catch (error) {
     typingMsg.remove();
     addMessage(

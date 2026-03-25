@@ -207,6 +207,18 @@
   color: var(--chat-muted);
 }
 
+.typing-dots::after {
+  content: "";
+  animation: dots 1.3s infinite;
+}
+
+@keyframes dots {
+  0% { content: ""; }
+  33% { content: "."; }
+  66% { content: ".."; }
+  100% { content: "..."; }
+}
+
 @media (max-width: 600px) {
   #chatbotWindow {
     right: 12px;

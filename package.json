@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/Naflin11/Nashath.us#readme",
   "dependencies": {
+    "@google/genai": "^1.46.0",
     "openai": "^6.27.0"
   }
 }
