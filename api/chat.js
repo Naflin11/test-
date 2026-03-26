@@ -1,13 +1,6 @@
 const { GoogleGenAI } = require("@google/genai");
 
 module.exports = async function handler(req, res) {
-  if (req.method === "GET") {
-    return res.status(200).json({
-      status: "ok",
-      message: "Gemini chat API is live"
-    });
-  }
-
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -15,141 +8,111 @@ module.exports = async function handler(req, res) {
   try {
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({
-        error: "GEMINI_API_KEY is missing in environment variables."
+        error: "GEMINI_API_KEY missing"
       });
     }
 
     const { message, history = [] } = req.body || {};
 
     if (!message || !message.trim()) {
-      return res.status(400).json({ error: "Message is required" });
+      return res.status(400).json({ error: "Message required" });
     }
 
     const ai = new GoogleGenAI({
       apiKey: process.env.GEMINI_API_KEY
     });
 
+    // 🔥 WEBSITE KNOWLEDGE (SOURCE OF TRUTH)
     const websiteKnowledge = `
-Business name: Nash Tax & Bookkeeping
+Nash Tax & Bookkeeping helps individuals and businesses stay compliant, organized, and financially confident.
 
-Brand message:
-- Tax Compliance Made Easy For You
-- Helping individuals and businesses stay compliant, organized, and financially confident.
+Services:
+- Individual Taxes (credits, deductions, filing, year-round support)
+- Business Taxes (planning, expense tracking, reporting)
+- Bookkeeping (monthly reconciliations, reports, audit-ready books)
+- Payroll (accurate payroll, employee support)
+- Business Formation (registration and setup)
 
-Main services:
-- Individual Taxes
-- Business Taxes
-- Bookkeeping
-- Payroll
-- Business Formation
+Process:
+1. Discovery call
+2. Secure document upload
+3. Reporting and ongoing support
 
-Service details:
-- Individual Taxes: Maximize returns and file with confidence using a clean, guided process. Includes credits and deductions, accurate filing, and year-round support.
-- Business Taxes: Tax planning and filing that protects cash flow and reduces risk. Includes quarterly strategy, expense tracking, and clean reporting.
-- Bookkeeping: Monthly reconciliations and reports that are tidy, consistent, and useful. Includes monthly close, P&L + Balance sheet, and audit-ready books.
-- Payroll: Accurate payroll processing with structured compliance-friendly support. Includes monthly payroll runs, employee support, and on-time delivery.
-- Business Formation: Business registration and setup support.
+Other:
+- Free consultation available
+- Remote-friendly services
+- Secure document handling
 
-Why clients choose Nash:
-- Trusted financial partners
-- Reliable and efficient process
-- Personalized support
-
-3-step process:
-1. Discovery Call: We understand your goals and recommend the best plan.
-2. Secure Document Upload: Clear checklists and simple document sharing.
-3. Reporting & Support: Clean reports and reminders so clients are always prepared.
-
-FAQ answers:
-- Free consultations: Yes. We start with a short call to understand needs and recommend the best path.
-- Document handling: We follow a secure document workflow with clear checklists and consistent updates.
-- Remote support: Yes. Many services can be delivered remotely. Details are confirmed during consultation.
-
-Contact details:
+Contact:
 - Phone: +1 (914) 413 4870
 - Email: Tax@nashath.us
 - Location: Dallas, TX
-- Remote-friendly: Yes
-- Business hours: 9AM–6PM
-- Reply within business hours: 9AM–6PM
+- Hours: 9AM–6PM
+`;
 
-Important rules:
-- Only answer using this approved website knowledge.
-- Do not invent pricing, tax rates, deadlines, legal conclusions, office policies, or extra services.
-- Do not provide final tax or legal advice.
-- If the answer is not clearly available here or the question is case-specific, say:
-  "Please contact Nash Tax & Bookkeeping directly for personalized assistance."
-    `.trim();
-
+    // 🔥 IMPROVED SYSTEM PROMPT (CONVERSATIONAL)
     const systemInstruction = `
-You are the website assistant for Nash Tax & Bookkeeping.
+You are a helpful assistant for Nash Tax & Bookkeeping.
 
-Your job:
-- Answer visitor questions using only the approved website knowledge provided.
-- Be professional, warm, clear, and concise.
-- Help users understand services, process, remote support, and how to contact the team.
-- Keep answers practical and natural.
-- Use short paragraphs or bullet points when helpful.
-- Keep most answers under 120 words.
-- Never invent facts.
-- Never provide final legal, tax, or compliance advice.
-- If the question asks for case-specific advice, missing details, or something not in the approved knowledge, reply:
-  "Please contact Nash Tax & Bookkeeping directly for personalized assistance."
+Your role:
+- Help website visitors understand services and next steps
+- Be friendly, natural, and conversational (not robotic)
+- Speak like a real human assistant
 
-Approved website knowledge:
+Use the website knowledge as your main source, but:
+- Explain things naturally
+- Rephrase and simplify
+- Combine information when helpful
+
+Do NOT:
+- Invent pricing, tax rates, deadlines, or legal advice
+- Give final tax/legal decisions
+
+If the question is specific or unclear:
+- Give general guidance
+- Then suggest contacting the team
+
+Tone:
+- Friendly, professional, human-like
+- Short, clear responses (3–5 sentences max)
+
+Website knowledge:
 ${websiteKnowledge}
-    `.trim();
+`;
 
-    const sanitizedHistory = Array.isArray(history)
-      ? history
-          .filter(
-            (item) =>
-              item &&
-              typeof item.role === "string" &&
-              typeof item.content === "string" &&
-              item.content.trim()
-          )
-          .slice(-10)
-      : [];
-
-    const formattedConversation = sanitizedHistory
-      .map((item) => {
-        const speaker = item.role === "assistant" ? "Assistant" : "User";
-        return `${speaker}: ${item.content.trim()}`;
-      })
+    // 🔥 BETTER CONVERSATION FORMAT
+    const formattedHistory = history
+      .slice(-8)
+      .map((h) => `${h.role === "assistant" ? "Assistant" : "User"}: ${h.content}`)
       .join("\n");
 
     const prompt = `
-Conversation so far:
-${formattedConversation || "No previous conversation."}
+Conversation:
+${formattedHistory || "No previous conversation"}
 
-Latest user question:
-${message.trim()}
+User: ${message}
 
-Write a complete and helpful answer for the website visitor using only the approved website knowledge.
-    `.trim();
+Respond naturally like a helpful assistant.
+`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         systemInstruction,
-        temperature: 0.2,
+        temperature: 0.5,
         maxOutputTokens: 300
       }
     });
 
-    const reply =
-      response.text?.trim() ||
-      "Sorry, I couldn't generate a response right now.";
+    return res.status(200).json({
+      reply: response.text || "Sorry, something went wrong."
+    });
 
-    return res.status(200).json({ reply });
   } catch (error) {
-    console.error("Gemini chat API error:", error);
-
+    console.error(error);
     return res.status(500).json({
-      error:
-        error.message || "Something went wrong while processing your request."
+      error: "Server error"
     });
   }
 };

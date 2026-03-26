@@ -46,7 +46,7 @@ function showWelcomeMessages() {
 function addTypingMessage() {
   const msg = document.createElement("div");
   msg.className = "chat-message bot typing";
-  msg.textContent = "Typing...";
+  msg.innerHTML = "Typing<span>.</span><span>.</span><span>.</span>";
   chatMessages.appendChild(msg);
   scrollToBottom();
   return msg;
