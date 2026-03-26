@@ -8,6 +8,7 @@ const quickButtons = document.querySelectorAll(".quick-btn");
 
 let hasShownWelcome = false;
 let chatHistory = [];
+let isSending = false;
 
 function toggleChat() {
   chatbotWindow.classList.toggle("open");
@@ -44,49 +45,32 @@ function showWelcomeMessages() {
 
 function addTypingMessage() {
   const msg = document.createElement("div");
-  msg.className = "chat-message bot typing typing-dots";
-  msg.textContent = "Typing";
+  msg.className = "chat-message bot typing";
+  msg.textContent = "Typing...";
   chatMessages.appendChild(msg);
   scrollToBottom();
   return msg;
 }
 
-function maybeShowLeadPrompt(userMessage, botReply) {
-  const text = `${userMessage} ${botReply}`.toLowerCase();
+function setSendingState(sending) {
+  isSending = sending;
+  chatSend.disabled = sending;
+  chatInput.disabled = sending;
 
-  const leadKeywords = [
-    "book",
-    "consultation",
-    "contact",
-    "call",
-    "email",
-    "price",
-    "cost",
-    "service",
-    "help with my taxes",
-    "need help",
-    "register my business",
-    "bookkeeping for my business"
-  ];
-
-  const matched = leadKeywords.some((keyword) => text.includes(keyword));
-
-  if (matched) {
-    addMessage(
-      "If you'd like, you can contact Nash Tax & Bookkeeping directly for personalized assistance.",
-      "bot"
-    );
-  }
+  quickButtons.forEach((button) => {
+    button.disabled = sending;
+  });
 }
 
 async function sendMessage(messageText = null) {
   const message = (messageText || chatInput.value).trim();
-  if (!message) return;
+  if (!message || isSending) return;
 
   addMessage(message, "user");
   chatInput.value = "";
   chatHistory.push({ role: "user", content: message });
 
+  setSendingState(true);
   const typingMsg = addTypingMessage();
 
   try {
@@ -109,6 +93,8 @@ async function sendMessage(messageText = null) {
         data.error || "Sorry, something went wrong. Please try again.",
         "bot"
       );
+      setSendingState(false);
+      chatInput.focus();
       return;
     }
 
@@ -118,8 +104,6 @@ async function sendMessage(messageText = null) {
 
     addMessage(reply, "bot");
     chatHistory.push({ role: "assistant", content: reply });
-
-    maybeShowLeadPrompt(message, reply);
   } catch (error) {
     typingMsg.remove();
     addMessage(
@@ -127,6 +111,9 @@ async function sendMessage(messageText = null) {
       "bot"
     );
   }
+
+  setSendingState(false);
+  chatInput.focus();
 }
 
 chatbotButton.addEventListener("click", toggleChat);

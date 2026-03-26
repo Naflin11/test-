@@ -114,7 +114,7 @@
   margin-bottom: 10px;
   padding: 11px 13px;
   border-radius: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
   font-size: 14px;
   white-space: pre-wrap;
   word-break: break-word;
@@ -205,18 +205,6 @@
 .typing {
   font-style: italic;
   color: var(--chat-muted);
-}
-
-.typing-dots::after {
-  content: "";
-  animation: dots 1.3s infinite;
-}
-
-@keyframes dots {
-  0% { content: ""; }
-  33% { content: "."; }
-  66% { content: ".."; }
-  100% { content: "..."; }
 }
 
 @media (max-width: 600px) {

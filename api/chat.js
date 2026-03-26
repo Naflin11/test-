@@ -29,61 +29,127 @@ module.exports = async function handler(req, res) {
       apiKey: process.env.GEMINI_API_KEY
     });
 
+    const websiteKnowledge = `
+Business name: Nash Tax & Bookkeeping
+
+Brand message:
+- Tax Compliance Made Easy For You
+- Helping individuals and businesses stay compliant, organized, and financially confident.
+
+Main services:
+- Individual Taxes
+- Business Taxes
+- Bookkeeping
+- Payroll
+- Business Formation
+
+Service details:
+- Individual Taxes: Maximize returns and file with confidence using a clean, guided process. Includes credits and deductions, accurate filing, and year-round support.
+- Business Taxes: Tax planning and filing that protects cash flow and reduces risk. Includes quarterly strategy, expense tracking, and clean reporting.
+- Bookkeeping: Monthly reconciliations and reports that are tidy, consistent, and useful. Includes monthly close, P&L + Balance sheet, and audit-ready books.
+- Payroll: Accurate payroll processing with structured compliance-friendly support. Includes monthly payroll runs, employee support, and on-time delivery.
+- Business Formation: Business registration and setup support.
+
+Why clients choose Nash:
+- Trusted financial partners
+- Reliable and efficient process
+- Personalized support
+
+3-step process:
+1. Discovery Call: We understand your goals and recommend the best plan.
+2. Secure Document Upload: Clear checklists and simple document sharing.
+3. Reporting & Support: Clean reports and reminders so clients are always prepared.
+
+FAQ answers:
+- Free consultations: Yes. We start with a short call to understand needs and recommend the best path.
+- Document handling: We follow a secure document workflow with clear checklists and consistent updates.
+- Remote support: Yes. Many services can be delivered remotely. Details are confirmed during consultation.
+
+Contact details:
+- Phone: +1 (914) 413 4870
+- Email: Tax@nashath.us
+- Location: Dallas, TX
+- Remote-friendly: Yes
+- Business hours: 9AM–6PM
+- Reply within business hours: 9AM–6PM
+
+Important rules:
+- Only answer using this approved website knowledge.
+- Do not invent pricing, tax rates, deadlines, legal conclusions, office policies, or extra services.
+- Do not provide final tax or legal advice.
+- If the answer is not clearly available here or the question is case-specific, say:
+  "Please contact Nash Tax & Bookkeeping directly for personalized assistance."
+    `.trim();
+
     const systemInstruction = `
 You are the website assistant for Nash Tax & Bookkeeping.
 
-Your role:
-- Help visitors with bookkeeping, payroll, tax filing, business registration, and consultation questions.
-- Be professional, friendly, warm, and concise.
-- Give general information only.
-- Do not provide final legal, tax, accounting, or compliance advice.
-- Do not invent tax rates, fees, filing deadlines, office hours, laws, or guarantees.
-- If the question is case-specific, uncertain, or needs a professional review, ask the visitor to contact Nash Tax & Bookkeeping directly.
-- Keep answers short and practical, usually under 120 words.
-- Encourage users to contact the business when they need personalized support.
+Your job:
+- Answer visitor questions using only the approved website knowledge provided.
+- Be professional, warm, clear, and concise.
+- Help users understand services, process, remote support, and how to contact the team.
+- Keep answers practical and natural.
+- Use short paragraphs or bullet points when helpful.
+- Keep most answers under 120 words.
+- Never invent facts.
+- Never provide final legal, tax, or compliance advice.
+- If the question asks for case-specific advice, missing details, or something not in the approved knowledge, reply:
+  "Please contact Nash Tax & Bookkeeping directly for personalized assistance."
 
-Approved business context:
-- Business name: Nash Tax & Bookkeeping
-- Core services: bookkeeping, payroll, tax filing, business registration, consultations
-- Tone: trustworthy, premium, professional, approachable
+Approved website knowledge:
+${websiteKnowledge}
     `.trim();
 
-    const formattedHistory = history
-      .filter((item) => item && item.role && item.content)
-      .slice(-12)
+    const sanitizedHistory = Array.isArray(history)
+      ? history
+          .filter(
+            (item) =>
+              item &&
+              typeof item.role === "string" &&
+              typeof item.content === "string" &&
+              item.content.trim()
+          )
+          .slice(-10)
+      : [];
+
+    const formattedConversation = sanitizedHistory
       .map((item) => {
         const speaker = item.role === "assistant" ? "Assistant" : "User";
-        return `${speaker}: ${item.content}`;
+        return `${speaker}: ${item.content.trim()}`;
       })
       .join("\n");
 
     const prompt = `
-${formattedHistory ? formattedHistory + "\n" : ""}User: ${message}
-Assistant:
+Conversation so far:
+${formattedConversation || "No previous conversation."}
+
+Latest user question:
+${message.trim()}
+
+Write a complete and helpful answer for the website visitor using only the approved website knowledge.
     `.trim();
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         systemInstruction,
-        temperature: 0.4,
-        maxOutputTokens: 220
+        temperature: 0.2,
+        maxOutputTokens: 300
       }
     });
 
-    return res.status(200).json({
-      reply:
-        response.text ||
-        "Sorry, I couldn't generate a response right now."
-    });
+    const reply =
+      response.text?.trim() ||
+      "Sorry, I couldn't generate a response right now.";
+
+    return res.status(200).json({ reply });
   } catch (error) {
     console.error("Gemini chat API error:", error);
 
     return res.status(500).json({
       error:
-        error.message ||
-        "Something went wrong while processing your request."
+        error.message || "Something went wrong while processing your request."
     });
   }
 };
