@@ -1968,3 +1968,12 @@ button,
     font-size: 13px;
   }
 }
+@media (max-width: 768px) {
+  .check {
+    width: 100%;
+  }
+
+  .check span {
+    font-size: 13px;
+  }
+}
