@@ -453,43 +453,73 @@
 
         <!-- RIGHT -->
         <aside class="card side">
-          <div class="sideHead">Let’s Get Started</div>
-          <div class="sideBody">
-            <form action="#" method="post">
-              <div class="fRow">
-                <input class="inp" type="text" name="name" placeholder="Name" required>
-                <input class="inp" type="email" name="email" placeholder="Email" required>
-              </div>
-              <div class="fRow" style="margin-top:10px;">
-                <input class="inp" type="text" name="phone" placeholder="Phone">
-                <input class="inp" type="text" name="company" placeholder="Business Name">
-              </div>
-              <textarea class="inp" name="message" placeholder="Message" style="margin-top:10px;"></textarea>
+  <div class="sideHead">Let’s Get Started</div>
 
-              <label class="check">
-                <input type="checkbox" />
-                <span>I agree to receive updates from Nash via SMS/Email</span>
-              </label>
+  <div class="contactTabs">
+    <button type="button" class="tabBtn active" data-tab="email">Email Form</button>
+    <button type="button" class="tabBtn" data-tab="calendly">Calendly</button>
+  </div>
 
-              <button class="btn" type="submit">Send</button>
-            </form>
+  <div class="sideBody">
 
-            <div class="contactBlock">
-              <div class="cItem">
-                <div class="cBadge">📞</div>
-                <div>+1 914 413 4870</div>
-              </div>
-              <div class="cItem">
-                <div class="cBadge">✉️</div>
-                <div>tax@nashath.us</div>
-              </div>
-              <div class="cItem">
-                <div class="cBadge">📍</div>
-                <div>Dallas, TX</div>
-              </div>
-            </div>
-          </div>
-        </aside>
+    <!-- EMAIL FORM -->
+    <div class="tabPanel active" id="emailPanel">
+      <form action="#" method="post">
+        <div class="fRow">
+          <input class="inp" type="text" name="name" placeholder="Name" required>
+          <input class="inp" type="email" name="email" placeholder="Email" required>
+        </div>
+
+        <div class="fRow" style="margin-top:10px;">
+          <input class="inp" type="text" name="phone" placeholder="Phone">
+          <input class="inp" type="text" name="company" placeholder="Business Name">
+        </div>
+
+        <textarea class="inp" name="message" placeholder="Message" style="margin-top:10px;"></textarea>
+
+        <label class="check">
+          <input type="checkbox" />
+          <span>I agree to receive updates from Nash via SMS/Email</span>
+        </label>
+
+        <button class="btn" type="submit">Send</button>
+      </form>
+    </div>
+
+    <!-- CALENDLY -->
+    <div class="tabPanel" id="calendlyPanel">
+      <p class="calendlyText">
+        Choose a convenient time for your free consultation.
+      </p>
+
+      <a
+        class="btn calendlyBtn"
+        href="https://calendly.com/tax-nashath/new-meeting?back=1&month=2026-06"
+        target="_blank"
+        rel="noopener">
+        Book via Calendly
+      </a>
+    </div>
+
+    <div class="contactBlock">
+      <div class="cItem">
+        <div class="cBadge">📞</div>
+        <div>+1 914 413 4870</div>
+      </div>
+
+      <div class="cItem">
+        <div class="cBadge">✉️</div>
+        <div>tax@nashath.us</div>
+      </div>
+
+      <div class="cItem">
+        <div class="cBadge">📍</div>
+        <div>Dallas, TX</div>
+      </div>
+    </div>
+
+  </div>
+</aside>
 
       </div>
     </div>
@@ -589,6 +619,22 @@
   </div>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"> 
 </footer>
+<script>
+  document.querySelectorAll(".tabBtn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tabBtn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tabPanel").forEach((p) => p.classList.remove("active"));
+
+      btn.classList.add("active");
+
+      if (btn.dataset.tab === "email") {
+        document.getElementById("emailPanel").classList.add("active");
+      } else {
+        document.getElementById("calendlyPanel").classList.add("active");
+      }
+    });
+  });
+</script>
 
 </body>
 </html>
