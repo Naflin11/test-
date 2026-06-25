@@ -5710,3 +5710,44 @@ h1 {
   align-items:center;
   text-align:center;
 }
+.center-service-card {
+  position: relative;
+  z-index: 5;
+
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+
+  background: radial-gradient(circle, #f6f2e7 0%, #eee8dc 100%);
+  border: 8px solid rgba(255, 255, 255, 0.98);
+
+  box-shadow:
+    0 0 45px rgba(201, 162, 76, 0.16),
+    0 20px 55px rgba(0, 0, 0, 0.10);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 16px;
+  text-decoration: none;
+
+  /* move circle slightly down */
+  transform: translateY(28px);
+}
+@media (max-width: 768px) {
+  .center-service-card {
+    width: 180px;
+    height: 180px;
+    padding: 10px;
+    border-width: 5px;
+    transform: translateY(20px);
+  }
+
+  .center-service-card img,
+  .center-service-card .center-logo {
+    width: 100%;
+    height: auto;
+    max-width: 120px;
+  }
+}
